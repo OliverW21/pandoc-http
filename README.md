@@ -1,3 +1,5 @@
+This Fork updates the Node and Pandoc Versions and removes the non Latex Tag.
+
 RESTful HTTP API for Pandoc
 ===========================
 [Pandoc](http://pandoc.org/) is an amazing universal document converter. Unfortunately, it
