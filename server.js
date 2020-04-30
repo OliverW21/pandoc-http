@@ -6,6 +6,7 @@ const rawBody = require('raw-body');
 const spawn = require('child_process').spawn;
 
 const pandocPath = process.env.PANDOC || 'pandoc';
+const pdflatexPath = process.env.PDFLATEX || 'pdflatex';
 
 const port = 80;
 
@@ -43,6 +44,37 @@ function pandoc(inputFile, outputFile, from, to) {
     });
 }
 
+function pdflatex (inputFile, outputFile) {
+    return new Promise(((resolve, reject) => {
+        let args = ['-jobname', outputFile.slice(0, -4), inputFile]
+        let pdflatex = spawn(pdflatexPath, args);
+
+        pdflatex.on('error', (err) => reject(err));
+
+        pdflatex.stderr.on('data', (data) => error += data);
+
+        pdflatex.on('close', (code) => {
+            if (code !== 0) {
+                let msg = 'PDFLateX finished with exit code ' + code;
+                if (error) {
+                    msg += ':' + error;
+                }
+                reject(msg);
+            } else {
+                resolve();
+            }
+        });
+    }))
+}
+
+function convert (inputFile, outputFile, inputType, pandocOutputType) {
+    if(inputType === 'latex' && pandocOutputType === 'pdf'){
+        return pdflatex(inputFile, outputFile)
+    }else{
+        return pandoc(inputFile, outputFile, inputType, pandocOutputType)
+    }
+}
+
 
 /**
  * Handles incoming HTTP request. Only POST requests are accepted and the header fields accept and content-type must be
@@ -71,12 +103,14 @@ function handleRequest(req, res) {
         // Pandoc only supports pdf via latex
         if (pandocOutputType === 'pdf') {
             outputFile += '.pdf';
-            pandocOutputType = 'latex';
+            if(inputType !== 'latex'){
+                pandocOutputType = 'latex';
+            }
         }
 
         rawBody(req)
             .then((buffer) => fs.writeFile(inputFile, buffer))
-            .then(() => pandoc(inputFile, outputFile, inputType, pandocOutputType))
+            .then(() => convert(inputFile, outputFile, inputType, pandocOutputType))
             .then(() => fs.readFile(outputFile))
             .then((result) => {
                 res.setHeader('Content-Type', outputMediaType);
