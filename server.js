@@ -47,7 +47,11 @@ function pandoc(inputFile, outputFile, from, to) {
 function pdflatex (inputFile, outputFile) {
     return new Promise(((resolve, reject) => {
         let args = ['-jobname', outputFile.slice(0, -4), inputFile]
+        console.log('Args: ' + args);
+        console.log('InputFile: ' + inputFile);
+        console.log('pdfLatexPath: ' + pdflatexPath);
         let pdflatex = spawn(pdflatexPath, args);
+        console.log('pdflatex: ' + pdflatex);
 
         pdflatex.on('error', (err) => reject(err));
 
@@ -61,6 +65,9 @@ function pdflatex (inputFile, outputFile) {
                 }
                 reject(msg);
             } else {
+                console.log('Input Data: ' + fs.readFile(inputFile))
+                console.log('Output Data: ' + fs.readFile(outputFile))
+
                 resolve();
             }
         });
