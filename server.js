@@ -46,12 +46,8 @@ function pandoc(inputFile, outputFile, from, to) {
 
 function pdflatex (inputFile, outputFile) {
     return new Promise(((resolve, reject) => {
-        let args = ['-interaction=batchmode','-jobname', outputFile.slice(0, -4), inputFile]
-        console.log('Args: ' + args);
-        console.log('InputFile: ' + inputFile);
-        console.log('pdfLatexPath: ' + pdflatexPath);
+        let args = ['-interaction=batchmode','-jobname', outputFile.slice(0, -4), inputFile];
         let pdflatex = spawn(pdflatexPath, args);
-        console.log('pdflatex: ' + pdflatex);
 
         pdflatex.on('error', (err) => reject(err));
 
@@ -65,9 +61,6 @@ function pdflatex (inputFile, outputFile) {
                 }
                 reject(msg);
             } else {
-                console.log('Input Data: ' + fs.readFile(inputFile))
-                console.log('Output Data: ' + fs.readFile(outputFile))
-
                 resolve();
             }
         });
@@ -76,6 +69,7 @@ function pdflatex (inputFile, outputFile) {
 
 function convert (inputFile, outputFile, inputType, pandocOutputType) {
     if(inputType === 'latex' && pandocOutputType === 'pdf'){
+        console.log('Using PdfLateX to convert Latex to PDF directly.')
         return pdflatex(inputFile, outputFile)
     }else{
         return pandoc(inputFile, outputFile, inputType, pandocOutputType)
