@@ -45,26 +45,16 @@ function pandoc(inputFile, outputFile, from, to) {
 }
 
 function pdflatex (inputFile, outputFile) {
-    return new Promise(((resolve, reject) => {
+    return new Promise((resolve, reject) => {
         let args = ['-interaction=batchmode','-jobname', outputFile.slice(0, -4), inputFile];
         let pdflatex = spawn(pdflatexPath, args);
 
         pdflatex.on('error', (err) => reject(err));
 
-        pdflatex.stderr.on('data', (data) => error += data);
-
-        pdflatex.on('close', (code) => {
-            if (code !== 0) {
-                let msg = 'PDFLateX finished with exit code ' + code;
-                if (error) {
-                    msg += ':' + error;
-                }
-                reject(msg);
-            } else {
-                resolve();
-            }
+        pdflatex.on('close', () => {
+            resolve();
         });
-    }))
+    });
 }
 
 function convert (inputFile, outputFile, inputType, pandocOutputType) {
