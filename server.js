@@ -46,7 +46,7 @@ function pandoc(inputFile, outputFile, from, to) {
 
 function pdflatex (inputFile, outputFile) {
     return new Promise(((resolve, reject) => {
-        let args = ['-jobname', outputFile.slice(0, -4), inputFile]
+        let args = ['-interaction=batchmode','-jobname', outputFile.slice(0, -4), inputFile]
         console.log('Args: ' + args);
         console.log('InputFile: ' + inputFile);
         console.log('pdfLatexPath: ' + pdflatexPath);
