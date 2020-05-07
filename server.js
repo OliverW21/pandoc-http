@@ -60,7 +60,10 @@ function pdflatex (inputFile, outputFile) {
 function convert (inputFile, outputFile, inputType, pandocOutputType) {
     if(inputType === 'latex' && pandocOutputType === 'pdf'){
         console.log('Using PdfLateX to convert Latex to PDF directly.')
-        return pdflatex(inputFile, outputFile)
+        pdflatex(inputFile, outputFile)
+          .then(() => {
+              return pdflatex(inputFile, outputFile)
+          });
     }else{
         return pandoc(inputFile, outputFile, inputType, pandocOutputType)
     }
