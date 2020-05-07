@@ -1,6 +1,6 @@
 {
   "name": "pandoc-service",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Pandoc with HTTP api",
   "main": "index.js",
   "private": true,
@@ -30,6 +30,7 @@
   },
   "dependencies": {
     "fs-promise": "^1.0.0",
+    "lignator": "^1.0.2",
     "raw-body": "^2.1.7",
     "yamljs": "^0.2.10"
   }

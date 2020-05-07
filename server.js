@@ -2,6 +2,7 @@ const http = require('http');
 const fs = require('fs-promise');
 const mediaTypeConverter = require('./mediatype-converter');
 const rawBody = require('raw-body');
+const lignator = require('lignator');
 
 const spawn = require('child_process').spawn;
 
@@ -69,6 +70,38 @@ function convert (inputFile, outputFile, inputType, pandocOutputType) {
     }
 }
 
+function download (url, dest) {
+    return new Promise((resolve, reject) => {
+        let file = fs.createWriteStream(dest);
+        let request = http.get(url, function(response) {
+            response.pipe(file);
+            file.on('finish', function() {
+                file.close();
+                resolve('success');
+            });
+        }).on('error', function(err) {
+            fs.unlink(dest);
+            reject('failed');
+        });
+    });
+}
+
+function downloadAssets(assetUrls){
+    return new Promise((resolve,reject) => {
+        let requests = [];
+        for(let asset in assetUrls){
+            requests.push(download(asset.url, './assets/' + asset.name))
+        }
+        Promise.all(requests)
+          .catch(() => {
+              reject('Download of one or more assets failed!');
+          })
+          .then(() => {
+              resolve();
+          })
+    })
+}
+
 
 /**
  * Handles incoming HTTP request. Only POST requests are accepted and the header fields accept and content-type must be
@@ -85,6 +118,7 @@ function handleRequest(req, res) {
         res.statusMessage = 'Bad Request';
         res.end('Only POST is supported');
     } else {
+        let assetUrls = JSON.parse(req.headers['Asset-Collection']);
         let inputType = mediaTypeConverter(req.headers['content-type']);
         let outputMediaType = req.headers['accept'];
         let pandocOutputType = mediaTypeConverter(req.headers['accept']);
@@ -106,6 +140,7 @@ function handleRequest(req, res) {
 
         rawBody(req)
             .then((buffer) => fs.writeFile(inputFile, buffer))
+            .then(() => downloadAssets(assetUrls))
             .then(() => convert(inputFile, outputFile, inputType, pandocOutputType))
             .then(() => fs.readFile(outputFile))
             .then((result) => {
@@ -119,7 +154,8 @@ function handleRequest(req, res) {
                 res.end(res.statusMessage);
                 console.error('Error during conversion: ', err);
             })
-            .then(() => fs.unlink(inputFile));
+            .then(() => fs.unlink(inputFile))
+            .then(() => lignator.remove('assets', false));
     }
 }
 let server = http.createServer(handleRequest);
