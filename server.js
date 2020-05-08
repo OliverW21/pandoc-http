@@ -45,6 +45,13 @@ function pandoc(inputFile, outputFile, from, to) {
     });
 }
 
+/**
+ * Start PdfLatex directly and generate a Pdf
+ *
+ * @param inputFile Inputfile name
+ * @param outputFile Outputfile name
+ * @returns {Promise}
+ */
 function pdflatex (inputFile, outputFile) {
     return new Promise((resolve, reject) => {
         let args = ['-interaction=nonstopmode','-jobname', outputFile.slice(0, -4), inputFile];
@@ -58,6 +65,16 @@ function pdflatex (inputFile, outputFile) {
     });
 }
 
+/**
+ * Manages methods of converting the files.
+ * Default is using Pandoc, LateX to PDF will use PDFLateX directly.
+ *
+ * @param inputFile Inputfile Name
+ * @param outputFile Outputfile Name
+ * @param inputType
+ * @param pandocOutputType
+ * @returns {Promise}
+ */
 function convert (inputFile, outputFile, inputType, pandocOutputType) {
     if(inputType === 'latex' && pandocOutputType === 'pdf'){
         console.log('Using PdfLateX to convert Latex to PDF directly.')
@@ -70,6 +87,13 @@ function convert (inputFile, outputFile, inputType, pandocOutputType) {
     }
 }
 
+/**
+ * Downloads a single Asset
+ *
+ * @param url Url to an Image
+ * @param dest Path where it will be saved
+ * @returns {Promise}
+ */
 function download (url, dest) {
     return new Promise((resolve, reject) => {
         let file = fs.createWriteStream(dest);
@@ -86,11 +110,20 @@ function download (url, dest) {
     });
 }
 
+/**
+ * Downloads all needed Assets to /assets/
+ *
+ * @param assetUrls Array of Objects that contain urls and names
+ * @returns {Promise}
+ */
 function downloadAssets(assetUrls){
     return new Promise((resolve,reject) => {
         let requests = [];
-        for(let asset in assetUrls){
-            requests.push(download(asset.url, './assets/' + asset.name))
+        if(assetUrls !== undefined){
+            assetUrls = JSON.parse(assetUrls);
+            for(let asset in assetUrls){
+                requests.push(download(asset.url, './assets/' + asset.name));
+            }
         }
         Promise.all(requests)
           .catch(() => {
@@ -98,7 +131,7 @@ function downloadAssets(assetUrls){
           })
           .then(() => {
               resolve();
-          })
+          });
     })
 }
 
@@ -118,7 +151,7 @@ function handleRequest(req, res) {
         res.statusMessage = 'Bad Request';
         res.end('Only POST is supported');
     } else {
-        let assetUrls = JSON.parse(req.headers['Asset-Collection']);
+        let assetUrls = req.headers['Asset-Collection'];
         let inputType = mediaTypeConverter(req.headers['content-type']);
         let outputMediaType = req.headers['accept'];
         let pandocOutputType = mediaTypeConverter(req.headers['accept']);
