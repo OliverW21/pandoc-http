@@ -60,11 +60,11 @@ function pdflatex (inputFile, outputFile) {
         pdflatex.on('error', (err) => reject(err));
 
         pdflatex.stdout.on('data', function(data) {
-            console.log(data.toString());
+            console.log("PdfLateX: " + data.toString());
         });
 
         pdflatex.on('close', (err) => {
-            console.log(err);
+            console.log("Close with: " + err);
             resolve();
         });
     });
@@ -82,13 +82,14 @@ function pdflatex (inputFile, outputFile) {
  */
 function convert (inputFile, outputFile, inputType, pandocOutputType) {
     if(inputType === 'latex' && pandocOutputType === 'pdf'){
-        console.log('Using PdfLateX to convert Latex to PDF directly.')
-        pdflatex(inputFile, outputFile)
+        console.log('Using PdfLateX to convert Latex to PDF directly.');
+       /* pdflatex(inputFile, outputFile)
           .then(() => {
-              return pdflatex(inputFile, outputFile)
-          });
+              return pdflatex(inputFile, outputFile);
+          });*/
+        return pdflatex(inputFile, outputFile);
     }else{
-        return pandoc(inputFile, outputFile, inputType, pandocOutputType)
+        return pandoc(inputFile, outputFile, inputType, pandocOutputType);
     }
 }
 
