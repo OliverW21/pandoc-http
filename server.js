@@ -1,4 +1,5 @@
 const http = require('http');
+const https = require('https');
 const fs = require('fs-promise');
 const mediaTypeConverter = require('./mediatype-converter');
 const rawBody = require('raw-body');
@@ -22,7 +23,7 @@ const port = 80;
  */
 function pandoc(inputFile, outputFile, from, to) {
     return new Promise((resolve, reject) => {
-        let args = ['-f', from, '-t', to, '-o', outputFile, inputFile];
+        let args = ['-f', from, '-t', to, '-o', 'output/' + outputFile, inputFile];
         let pandoc = spawn(pandocPath, args);
 
         let error = '';
@@ -54,7 +55,7 @@ function pandoc(inputFile, outputFile, from, to) {
  */
 function pdflatex (inputFile, outputFile) {
     return new Promise((resolve, reject) => {
-        let args = ['-synctex=1','-interaction=batchmode','-jobname', outputFile.slice(0, -4), inputFile];
+        let args = ['-synctex=1','-interaction=batchmode','-output-directory=output','-jobname', outputFile.slice(0, -4), inputFile];
         let pdflatex = spawn(pdflatexPath, args);
 
         pdflatex.on('error', (err) => reject(err));
@@ -103,9 +104,14 @@ function convert (inputFile, outputFile, inputType, pandocOutputType) {
  * @returns {Promise}
  */
 function download (url, dest) {
+    console.log('Downloading Asset from: ' + url + ' to ' + dest);
     return new Promise((resolve, reject) => {
         let file = fs.createWriteStream(dest);
-        let request = http.get(url, function(response) {
+
+        let link = new URL(url);
+        let client = (link.protocol.includes('https')) ? https : http;
+
+        let request = client.get(url, function(response) {
             response.pipe(file);
             file.on('finish', function() {
                 file.close();
@@ -129,12 +135,13 @@ function downloadAssets(assetUrls){
         let requests = [];
         if(assetUrls !== undefined){
             assetUrls = JSON.parse(assetUrls);
-            for(let asset in assetUrls){
+            for(let asset of assetUrls){
                 requests.push(download(asset.url, './assets/' + asset.name));
             }
         }
         Promise.all(requests)
-          .catch(() => {
+          .catch((err) => {
+              console.log(err);
               reject('Download of one or more assets failed!');
           })
           .then(() => {
@@ -159,7 +166,7 @@ function handleRequest(req, res) {
         res.statusMessage = 'Bad Request';
         res.end('Only POST is supported');
     } else {
-        let assetUrls = req.headers['Asset-Collection'];
+        let assetUrls = req.headers['asset-collection'];
         let inputType = mediaTypeConverter(req.headers['content-type']);
         let outputMediaType = req.headers['accept'];
         let pandocOutputType = mediaTypeConverter(req.headers['accept']);
@@ -183,11 +190,10 @@ function handleRequest(req, res) {
             .then((buffer) => fs.writeFile(inputFile, buffer))
             .then(() => downloadAssets(assetUrls))
             .then(() => convert(inputFile, outputFile, inputType, pandocOutputType))
-            .then(() => fs.readFile(outputFile))
+            .then(() => fs.readFile(__dirname + '/output/' + outputFile))
             .then((result) => {
                 res.setHeader('Content-Type', outputMediaType);
                 res.end(result);
-                fs.unlink(outputFile);
             })
             .catch((err) => {
                 res.statusCode = 500;
@@ -196,7 +202,8 @@ function handleRequest(req, res) {
                 console.error('Error during conversion: ', err);
             })
             .then(() => fs.unlink(inputFile))
-            .then(() => lignator.remove('assets', false));
+            .then(() => lignator.remove('assets', false))
+            .then(() => lignator.remove('output', false));
     }
 }
 let server = http.createServer(handleRequest);
