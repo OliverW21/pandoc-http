@@ -1,4 +1,5 @@
 This Fork updates the Node and Pandoc Versions and removes the non Latex Tag.
+It also adds a lot of new functionality like asset support, latex to pdf directly via PDFLateX, and Pandoc filters.
 
 RESTful HTTP API for Pandoc
 ===========================

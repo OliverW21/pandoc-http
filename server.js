@@ -19,11 +19,20 @@ const port = 80;
  * @param {String} outputFile Path to the output file
  * @param {String} from Type of the input file
  * @param {String} to Desired type of the output file
+ * @param {String} filters in valid JSON
  * @return {Promise} Resolves if conversion is successful, otherwise it reject with a corresponding error message.
  */
-function pandoc(inputFile, outputFile, from, to) {
+function pandoc(inputFile, outputFile, from, to, filters) {
+        let args = []
+        if(filters !== undefined){
+            filters = JSON.parse(filters);
+            for(let filter of filters){
+                args.push('--filter');
+                args.push('./filters/' + filter + '.py');
+            }
+        }
     return new Promise((resolve, reject) => {
-        let args = ['-f', from, '-t', to, '-o', 'output/' + outputFile, inputFile];
+        args = args.concat(['-f', from, '-t', to, '-o', 'output/' + outputFile, inputFile]);
         let pandoc = spawn(pandocPath, args);
 
         let error = '';
@@ -82,7 +91,7 @@ function pdflatex (inputFile, outputFile) {
  * @param pandocOutputType
  * @returns {Promise}
  */
-function convert (inputFile, outputFile, inputType, pandocOutputType) {
+function convert (inputFile, outputFile, inputType, pandocOutputType, filters) {
     if(inputType === 'latex' && pandocOutputType === 'pdf'){
         console.log('Using PdfLateX to convert Latex to PDF directly.');
         return new Promise((resolve, reject) => {
@@ -92,7 +101,7 @@ function convert (inputFile, outputFile, inputType, pandocOutputType) {
               .catch(() => reject());
         });
     }else{
-        return pandoc(inputFile, outputFile, inputType, pandocOutputType);
+        return pandoc(inputFile, outputFile, inputType, pandocOutputType, filters);
     }
 }
 
@@ -167,6 +176,7 @@ function handleRequest(req, res) {
         res.end('Only POST is supported');
     } else {
         let assetUrls = req.headers['asset-collection'];
+        let filters = req.headers['filters'];
         let inputType = mediaTypeConverter(req.headers['content-type']);
         let outputMediaType = req.headers['accept'];
         let pandocOutputType = mediaTypeConverter(req.headers['accept']);
@@ -189,7 +199,7 @@ function handleRequest(req, res) {
         rawBody(req)
             .then((buffer) => fs.writeFile(inputFile, buffer))
             .then(() => downloadAssets(assetUrls))
-            .then(() => convert(inputFile, outputFile, inputType, pandocOutputType))
+            .then(() => convert(inputFile, outputFile, inputType, pandocOutputType, filters))
             .then(() => fs.readFile(__dirname + '/output/' + outputFile))
             .then((result) => {
                 res.setHeader('Content-Type', outputMediaType);
