@@ -54,7 +54,7 @@ function pandoc(inputFile, outputFile, from, to) {
  */
 function pdflatex (inputFile, outputFile) {
     return new Promise((resolve, reject) => {
-        let args = ['-interaction batchmode','-jobname', outputFile.slice(0, -4), inputFile];
+        let args = ['-interaction=batchmode','-jobname', outputFile.slice(0, -4), inputFile];
         let pdflatex = spawn(pdflatexPath, args);
 
         pdflatex.on('error', (err) => reject(err));
@@ -73,6 +73,7 @@ function pdflatex (inputFile, outputFile) {
 /**
  * Manages methods of converting the files.
  * Default is using Pandoc, LateX to PDF will use PDFLateX directly.
+ * If we use PDFLateX directly we have to call it twice to enable a ToC.
  *
  * @param inputFile Inputfile Name
  * @param outputFile Outputfile Name
@@ -83,11 +84,12 @@ function pdflatex (inputFile, outputFile) {
 function convert (inputFile, outputFile, inputType, pandocOutputType) {
     if(inputType === 'latex' && pandocOutputType === 'pdf'){
         console.log('Using PdfLateX to convert Latex to PDF directly.');
-       /* pdflatex(inputFile, outputFile)
-          .then(() => {
-              return pdflatex(inputFile, outputFile);
-          });*/
-        return pdflatex(inputFile, outputFile);
+        return new Promise((resolve, reject) => {
+            pdflatex(inputFile, outputFile)
+              .then(() => pdflatex(inputFile, outputFile))
+              .then(() => resolve())
+              .catch(() => reject());
+        });
     }else{
         return pandoc(inputFile, outputFile, inputType, pandocOutputType);
     }
