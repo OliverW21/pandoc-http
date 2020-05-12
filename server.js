@@ -54,7 +54,7 @@ function pandoc(inputFile, outputFile, from, to) {
  */
 function pdflatex (inputFile, outputFile) {
     return new Promise((resolve, reject) => {
-        let args = ['-interaction=batchmode','-jobname', outputFile.slice(0, -4), inputFile];
+        let args = ['-synctex=1','-interaction=batchmode','-jobname', outputFile.slice(0, -4), inputFile];
         let pdflatex = spawn(pdflatexPath, args);
 
         pdflatex.on('error', (err) => reject(err));
