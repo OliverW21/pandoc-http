@@ -24,7 +24,7 @@ const port = 80;
  */
 function pandoc(inputFile, outputFile, from, to, filters) {
         let args = []
-        if(filters !== undefined){
+        if(filters){
             filters = JSON.parse(filters);
             for(let filter of filters){
                 args.push('--filter');
@@ -142,7 +142,7 @@ function download (url, dest) {
 function downloadAssets(assetUrls){
     return new Promise((resolve,reject) => {
         let requests = [];
-        if(assetUrls !== undefined){
+        if(assetUrls){
             assetUrls = JSON.parse(assetUrls);
             for(let asset of assetUrls){
                 requests.push(download(asset.url, './assets/' + asset.name));
