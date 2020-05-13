@@ -66,18 +66,27 @@ function pandoc(inputFile, outputFile, from, to, filters) {
  */
 function pdflatex (inputFile, outputFile) {
     return new Promise((resolve, reject) => {
-        let args = ['-synctex=1','-interaction=batchmode','-output-directory=output','-jobname', outputFile.slice(0, -4), inputFile];
+        let args = ['-synctex=1','-interaction=nonstopmode','-output-directory=output','-jobname', outputFile.slice(0, -4), inputFile];
         let pdflatex = spawn(pdflatexPath, args);
 
         pdflatex.on('error', (err) => reject(err));
 
         pdflatex.stdout.on('data', function(data) {
-            console.log("PdfLateX: " + data.toString());
+            if(data.toString().includes('Error')){
+                console.log(data.toString());
+            }
         });
 
-        pdflatex.on('close', (err) => {
-            console.log("Close with: " + err);
-            resolve();
+        pdflatex.on('close', (code) => {
+            let msg = "PDFLateX close with code: " + code;
+            fs.access(__dirname + '/output/' + outputFile, fs.F_OK, (e) => {
+                if (e) {
+                    console.log(msg + ' : ' + e);
+                    reject('PDFLateX failed to create a file. Please check your input for invalid LateX!');
+                } else {
+                    resolve();
+                }
+            })
         });
     });
 }
@@ -91,6 +100,7 @@ function pdflatex (inputFile, outputFile) {
  * @param outputFile Outputfile Name
  * @param inputType
  * @param pandocOutputType
+ * @param filters
  * @returns {Promise}
  */
 function convert (inputFile, outputFile, inputType, pandocOutputType, filters) {
@@ -100,7 +110,7 @@ function convert (inputFile, outputFile, inputType, pandocOutputType, filters) {
             pdflatex(inputFile, outputFile)
               .then(() => pdflatex(inputFile, outputFile))
               .then(() => resolve())
-              .catch(() => reject());
+              .catch((err) => reject(err));
         });
     }else{
         return pandoc(inputFile, outputFile, inputType, pandocOutputType, filters);
@@ -206,16 +216,19 @@ function handleRequest(req, res) {
             .then((result) => {
                 res.setHeader('Content-Type', outputMediaType);
                 res.end(result);
+                console.log('Success!');
             })
             .catch((err) => {
-                res.statusCode = 500;
-                res.statusMessage = 'Internal Server Error';
-                res.end(res.statusMessage);
                 console.error('Error during conversion: ', err);
+                res.statusCode = 500;
+                res.statusMessage = JSON.stringify('Internal Server Error. ' + err);
+                res.end(res.statusMessage);
             })
+            .then(() => console.log('Cleaning Up...'))
             .then(() => fs.unlink(inputFile))
             .then(() => lignator.remove('assets', false))
-            .then(() => lignator.remove('output', false));
+            .then(() => lignator.remove('output', false))
+            .then(() => console.log('Ready to handle a new Request.'));
     }
 }
 let server = http.createServer(handleRequest);
