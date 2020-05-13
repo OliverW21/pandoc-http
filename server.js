@@ -23,20 +23,22 @@ const port = 80;
  * @return {Promise} Resolves if conversion is successful, otherwise it reject with a corresponding error message.
  */
 function pandoc(inputFile, outputFile, from, to, filters) {
-        let args = []
-        if(filters){
-            filters = JSON.parse(filters);
-            for(let filter of filters){
-                args.push('--filter');
-                args.push('./filters/' + filter + '.py');
-            }
+    let args = []
+    if(filters){
+        filters = JSON.parse(filters);
+        for(let filter of filters){
+            args.push('--filter');
+            args.push('./filters/' + filter + '.py');
         }
+    }
+
     return new Promise((resolve, reject) => {
         args = args.concat(['-f', from, '-t', to, '-o', 'output/' + outputFile, inputFile]);
+        console.log('Starting Pandoc with these Args: ');
+        console.log(args);
         let pandoc = spawn(pandocPath, args);
 
         let error = '';
-
         pandoc.on('error', (err) => reject(err));
 
         pandoc.stderr.on('data', (data) => error += data);

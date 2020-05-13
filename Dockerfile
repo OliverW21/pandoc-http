@@ -30,7 +30,9 @@ RUN apt-get -qq -y install build-essential checkinstall && \
     pip3 install pandocfilters && \
     apt-get clean
 
-RUN mkdir /app
+RUN mkdir /app && \
+    mkdir /app/assets && \
+    mkdir /app/output
 
 WORKDIR /app
 
