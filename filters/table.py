@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-
-from pandocfilters import toJSONFilter, RawBlock, RawInline, Para, Table
+import sys
+import json
+from pandocfilters import toJSONFilter, RawBlock, RawInline, Para, Table, Plain
 
 def latex(s):
     return RawBlock('latex', s)
@@ -39,29 +40,30 @@ def tbl_contents(s):
     for row in s:
         para = []
         for col in row:
-            para.extend(col[0]['c'])
+            if col:
+                para.extend(col[0]['c'])
             para.append(inlatex(' & '))
         result.extend(para)
         result[-1] = inlatex(r' \\ \hline' '\n')
     return Para(result)
 
-def do_filter(k, v, f, m):
-    if k == "Table":
+def do_filter(key, value, f, m):
+    if key == "Table":
         # Ensure every alignment characters is surrounded by a pipes.
         # Get the string of the alignment characters
         # and split into an array for every characters.
-        split_alignment = [c for c in tbl_alignment(v[1])]
+        split_alignment = [c for c in tbl_alignment(value[1])]
         # Join this list into a single string with pipe symbols
         # between them, plus pipes at start and end.
         # This results in a boxed table.
         new_alignment = "|" + "|".join(split_alignment) + "|"
-        return [latex(r'\begin{tabularx}{14cm}{%s} \hline' % new_alignment),
-                tbl_headers(v[3]),
-                tbl_contents(v[4]),
+        return [latex(r'\begin{tabularx}{16cm}{%s} \hline' % new_alignment),
+                tbl_headers(value[3]),
+                tbl_contents(value[4]),
                 latex(r'\end{tabularx}'),
-                # Put the caption after the tabular so it appears under table.
-                tbl_caption(v[0]),
                 ]
 
 if __name__ == "__main__":
+    if sys.version_info[0] < 3:
+        raise Exception("Python 3 or a more recent version is required.")
     toJSONFilter(do_filter)

@@ -26,7 +26,8 @@ RUN apt-get -qq -y install build-essential checkinstall && \
     make install && \
     cd /opt && \
     rm -f Python-3.8.2.tgz && \
-    apt-get -qq -y install python3-pip && \
+    apt-get -qq -y install python3-pip python-pip && \
+    pip install pandocfilters && \
     pip3 install pandocfilters && \
     apt-get clean
 
