@@ -39,6 +39,8 @@ WORKDIR /app
 
 COPY ./ /app
 
+RUN find /app/filters -type f -iname "*.py" -exec chmod +x {} \;
+
 RUN npm install
 
 EXPOSE 80
