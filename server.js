@@ -67,6 +67,8 @@ function pandoc(inputFile, outputFile, from, to, filters) {
 function pdflatex (inputFile, outputFile) {
     return new Promise((resolve, reject) => {
         let args = ['-synctex=1','-interaction=nonstopmode','-output-directory=output','-jobname', outputFile.slice(0, -4), inputFile];
+        console.log('Starting PDFLateX with these Args: ');
+        console.log(args);
         let pdflatex = spawn(pdflatexPath, args);
 
         pdflatex.on('error', (err) => reject(err));
@@ -171,6 +173,38 @@ function downloadAssets(assetUrls){
     })
 }
 
+/**
+ * Removes all files for the current request
+ *
+ * @param outputFile
+ * @param inputFile
+ * @returns Promise
+ */
+function removeRequestFiles (outputFile, inputFile) {
+    return new Promise((resolve, reject) => {
+        let operations = []
+
+        operations.push(fs.unlink(inputFile))
+
+        const path = __dirname + '/output/'
+        let regex = new RegExp(outputFile.slice(0, -4) + "\..*")
+        fs.readdirSync(path)
+          .filter(f => regex.test(f))
+          .map(f => operations.push(fs.unlink(path + f)))
+
+        Promise.all(operations)
+          .catch((err) => {
+              console.log(err);
+              reject('Something went wrong, could not remove all files.');
+          })
+          .then(() => {
+              lignator.remove('assets', false)
+
+              resolve();
+          });
+    })
+}
+
 
 /**
  * Handles incoming HTTP request. Only POST requests are accepted and the header fields accept and content-type must be
@@ -225,9 +259,7 @@ function handleRequest(req, res) {
                 res.end(res.statusMessage);
             })
             .then(() => console.log('Cleaning Up...'))
-            .then(() => fs.unlink(inputFile))
-            .then(() => lignator.remove('assets', false))
-            .then(() => lignator.remove('output', false))
+            .then(() => removeRequestFiles(outputFile, inputFile))
             .then(() => console.log('Ready to handle a new Request.'));
     }
 }
