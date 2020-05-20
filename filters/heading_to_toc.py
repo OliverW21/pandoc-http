@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from pandocfilters import toJSONFilter, RawBlock, stringify
+from pandocfilters import toJSONFilter, RawBlock, stringify, Para
 import sys
 
 def latex(s):
@@ -9,20 +9,21 @@ def do_filter(key, value, f, m):
     if key == "Header":
         heading_no = value[0]
         if heading_no == 6:
-            begin_heading = latex('\\textbf{\large \section*{')
-            begin_toc = latex('\\addcontentsline{toc}{section}{')
+            begin_heading = '\\textbf{\large \section*{'
+            begin_toc = '\\addcontentsline{toc}{section}{'
         elif heading_no == 4:
-            begin_heading = latex('\\textbf{\Large \part*{')
-            begin_toc = latex('\\addcontentsline{toc}{part}{')
+            begin_heading = '\\textbf{\Large \part*{'
+            begin_toc = '\\addcontentsline{toc}{part}{'
         else:
             return
-        end_heading =  latex('}}')
-        end_toc = latex('}')
+        end_heading =  '}}\n'
+        end_toc = '}'
 
         raw_content = stringify(value[2])
-        content = latex(raw_content)
-        contents_arr = [begin_heading, content, end_heading, begin_toc, content, end_toc]
-        return contents_arr
+
+        heading = begin_heading + raw_content + end_heading
+        toc = begin_toc + raw_content + end_toc
+        return latex(heading + toc)
 
 def check_python3():
     if sys.version_info[0] < 3:
