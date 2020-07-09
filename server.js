@@ -137,14 +137,11 @@ function download (url, dest) {
         let request = client.get(url, function(response) {
             response.pipe(file);
             file.on('close', function () {
-                resolve('success');
-            });
-            file.on('finish', function() {
-                file.close();
+                resolve();
             });
         }).on('error', function(err) {
             fs.unlink(dest);
-            reject('failed');
+            reject();
         });
     });
 }
