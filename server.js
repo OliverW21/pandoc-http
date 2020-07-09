@@ -198,7 +198,7 @@ function removeRequestFiles (outputFile, inputFile) {
               reject('Something went wrong, could not remove all files.');
           })
           .then(() => {
-              lignator.remove('assets', false)
+              //lignator.remove('assets', false)
 
               resolve();
           });
