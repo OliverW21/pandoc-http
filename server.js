@@ -129,18 +129,10 @@ function convert (inputFile, outputFile, inputType, pandocOutputType, filters) {
  */
 function download (url, dest) {
     console.log('Downloading Asset from: ' + url + ' to ' + dest);
-    return new Promise((resolve, reject) => {
-        imageDownload.image({
-            url: url,
-            dest: dest
-        })
-          .then(function () {
-              resolve()
-          })
-          .catch(function () {
-            reject()
-          })
-    });
+    return imageDownload.image({
+        url: url,
+        dest: dest
+    })
 }
 
 /**
