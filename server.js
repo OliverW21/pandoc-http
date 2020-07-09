@@ -137,7 +137,9 @@ function download (url, dest) {
         client.get(url, function(response) {
             response.pipe(file);
             file.on('close', function () {
-                resolve();
+                setTimeout(function () {
+                    resolve();
+                },10)
             });
         }).on('error', function(err) {
             fs.unlink(dest);
