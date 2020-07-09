@@ -136,9 +136,11 @@ function download (url, dest) {
 
         let request = client.get(url, function(response) {
             response.pipe(file);
+            file.on('close', function () {
+                resolve('success');
+            });
             file.on('finish', function() {
                 file.close();
-                resolve('success');
             });
         }).on('error', function(err) {
             fs.unlink(dest);
@@ -198,7 +200,7 @@ function removeRequestFiles (outputFile, inputFile) {
               reject('Something went wrong, could not remove all files.');
           })
           .then(() => {
-              //lignator.remove('assets', false)
+              lignator.remove('assets', false)
 
               resolve();
           });
