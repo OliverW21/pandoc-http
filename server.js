@@ -1,5 +1,6 @@
 const http = require('http');
 const https = require('https');
+const request = require('request');
 const fs = require('fs-promise');
 const mediaTypeConverter = require('./mediatype-converter');
 const rawBody = require('raw-body');
@@ -129,20 +130,16 @@ function convert (inputFile, outputFile, inputType, pandocOutputType, filters) {
 function download (url, dest) {
     console.log('Downloading Asset from: ' + url + ' to ' + dest);
     return new Promise((resolve, reject) => {
-        let file = fs.createWriteStream(dest);
-
-        let link = new URL(url);
-        let client = (link.protocol.includes('https')) ? https : http;
-
-        let request = client.get(url, function(response) {
-            response.pipe(file);
-            file.on('close', function () {
+        request.head(url, function(err, res, body) {
+            request(url)
+              .pipe(fs.createWriteStream(dest))
+              .on('close', function () {
                 resolve();
-            });
-        }).on('error', function(err) {
-            fs.unlink(dest);
-            reject();
-        });
+              })
+              .on('error', function () {
+                reject();
+              });
+        })
     });
 }
 
