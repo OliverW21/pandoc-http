@@ -4,6 +4,7 @@ const fs = require('fs-promise');
 const mediaTypeConverter = require('./mediatype-converter');
 const rawBody = require('raw-body');
 const lignator = require('lignator');
+const request = require('request');
 
 const spawn = require('child_process').spawn;
 
@@ -128,39 +129,19 @@ function convert (inputFile, outputFile, inputType, pandocOutputType, filters) {
  */
 function download (url, dest) {
     console.log('Downloading Asset from: ' + url + ' to ' + dest);
-
-    let link = new URL(url);
-    let client = (link.protocol.includes('https')) ? https : http;
-
     return new Promise((resolve, reject) => {
-        let file = fs.createWriteStream(dest);
-        let fileInfo = null;
+        request.head(url, function(){
+            let req = request(url).pipe(fs.createWriteStream(dest))
 
-        const request = client.get(url, response => {
-            if (response.statusCode !== 200) {
-                reject(new Error(`Failed to get '${url}' (${response.statusCode})`));
-                return;
-            }
+            req.on('close', function () {
+                resolve();
+            });
 
-            fileInfo = {
-                mime: response.headers['content-type'],
-                size: parseInt(response.headers['content-length'], 10),
-            };
+            req.on('error', function () {
+                reject();
+            });
 
-            response.pipe(file);
         });
-
-        file.on('close', () => resolve(fileInfo));
-
-        request.on('error', err => {
-            fs.unlink(dest, () => reject(err));
-        });
-
-        file.on('error', err => {
-            fs.unlink(dest, () => reject(err));
-        });
-
-        request.end();
     });
 }
 
@@ -185,9 +166,7 @@ function downloadAssets(assetUrls){
               reject('Download of one or more assets failed!');
           })
           .then(() => {
-              setTimeout(function () {
-                  resolve();
-              },100);
+              resolve();
           });
     })
 }
@@ -235,6 +214,7 @@ function removeRequestFiles (outputFile, inputFile) {
  * @param {Object} res HTTP response
  */
 function handleRequest(req, res) {
+    console.log('Request received at [' + Date.now() + ']')
     if (req.method !== 'POST' || !req.headers['content-type'] || !req.headers['accept']) {
         res.statusCode = 400;
         res.statusMessage = 'Bad Request';
