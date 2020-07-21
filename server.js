@@ -128,23 +128,39 @@ function convert (inputFile, outputFile, inputType, pandocOutputType, filters) {
  */
 function download (url, dest) {
     console.log('Downloading Asset from: ' + url + ' to ' + dest);
+
+    let link = new URL(url);
+    let client = (link.protocol.includes('https')) ? https : http;
+
     return new Promise((resolve, reject) => {
         let file = fs.createWriteStream(dest);
+        let fileInfo = null;
 
-        let link = new URL(url);
-        let client = (link.protocol.includes('https')) ? https : http;
+        const request = client.get(url, response => {
+            if (response.statusCode !== 200) {
+                reject(new Error(`Failed to get '${url}' (${response.statusCode})`));
+                return;
+            }
 
-        client.get(url, function(response) {
+            fileInfo = {
+                mime: response.headers['content-type'],
+                size: parseInt(response.headers['content-length'], 10),
+            };
+
             response.pipe(file);
-            file.on('close', function () {
-                setTimeout(function () {
-                    resolve();
-                },10)
-            });
-        }).on('error', function(err) {
-            fs.unlink(dest);
-            reject();
         });
+
+        file.on('finish', () => resolve(fileInfo));
+
+        request.on('error', err => {
+            fs.unlink(dest, () => reject(err));
+        });
+
+        file.on('error', err => {
+            fs.unlink(dest, () => reject(err));
+        });
+
+        request.end();
     });
 }
 
