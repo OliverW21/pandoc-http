@@ -150,7 +150,7 @@ function download (url, dest) {
             response.pipe(file);
         });
 
-        file.on('finish', () => resolve(fileInfo));
+        file.on('close', () => resolve(fileInfo));
 
         request.on('error', err => {
             fs.unlink(dest, () => reject(err));
@@ -185,7 +185,9 @@ function downloadAssets(assetUrls){
               reject('Download of one or more assets failed!');
           })
           .then(() => {
-              resolve();
+              setTimeout(function () {
+                  resolve();
+              },100);
           });
     })
 }
@@ -215,7 +217,7 @@ function removeRequestFiles (outputFile, inputFile) {
               reject('Something went wrong, could not remove all files.');
           })
           .then(() => {
-              lignator.remove('assets', false)
+              //lignator.remove('assets', false);
 
               resolve();
           });
