@@ -1,10 +1,10 @@
 const http = require('http');
 const https = require('https');
-const fs = require('fs-promise');
+const fs = require('fs');
 const mediaTypeConverter = require('./mediatype-converter');
 const rawBody = require('raw-body');
 const lignator = require('lignator');
-const request = require('request');
+const Stream = require('stream').Transform;
 
 const spawn = require('child_process').spawn;
 
@@ -129,19 +129,27 @@ function convert (inputFile, outputFile, inputType, pandocOutputType, filters) {
  */
 function download (url, dest) {
     console.log('Downloading Asset from: ' + url + ' to ' + dest);
+
+    let link = new URL(url);
+    let client = (link.protocol.includes('https')) ? https : http;
+
     return new Promise((resolve, reject) => {
-        request.head(url, function(){
-            let req = request(url).pipe(fs.createWriteStream(dest))
+        client.request(url, function(response) {
+            let data = new Stream();
 
-            req.on('close', function () {
-                resolve();
-            });
-
-            req.on('error', function () {
+            response.on('error', function () {
                 reject();
             });
 
-        });
+            response.on('data', function(chunk) {
+                data.push(chunk);
+            });
+
+            response.on('end', function() {
+                fs.writeFileSync(dest, data.read());
+                resolve();
+            });
+        }).end();
     });
 }
 
@@ -179,28 +187,28 @@ function downloadAssets(assetUrls){
  * @returns Promise
  */
 function removeRequestFiles (outputFile, inputFile) {
-    return new Promise((resolve, reject) => {
-        let operations = []
-
-        operations.push(fs.unlink(inputFile))
-
-        const path = __dirname + '/output/'
-        let regex = new RegExp(outputFile.slice(0, -4) + "\..*")
-        fs.readdirSync(path)
-          .filter(f => regex.test(f))
-          .map(f => operations.push(fs.unlink(path + f)))
-
-        Promise.all(operations)
-          .catch((err) => {
-              console.log(err);
-              reject('Something went wrong, could not remove all files.');
-          })
-          .then(() => {
-              //lignator.remove('assets', false);
-
-              resolve();
-          });
-    })
+    // return new Promise((resolve, reject) => {
+    //     let operations = []
+    //
+    //     operations.push(fs.unlink(inputFile))
+    //
+    //     const path = __dirname + '/output/'
+    //     let regex = new RegExp(outputFile.slice(0, -4) + "\..*")
+    //     fs.readdirSync(path)
+    //       .filter(f => regex.test(f))
+    //       .map(f => operations.push(fs.unlink(path + f)))
+    //
+    //     Promise.all(operations)
+    //       .catch((err) => {
+    //           console.log(err);
+    //           reject('Something went wrong, could not remove all files.');
+    //       })
+    //       .then(() => {
+    //           //lignator.remove('assets', false);
+    //
+    //           resolve();
+    //       });
+    // })
 }
 
 
@@ -214,7 +222,7 @@ function removeRequestFiles (outputFile, inputFile) {
  * @param {Object} res HTTP response
  */
 function handleRequest(req, res) {
-    console.log('Request received at [' + Date.now() + ']')
+    console.log('Request received at [' + Date.toLocaleString() + ']')
     if (req.method !== 'POST' || !req.headers['content-type'] || !req.headers['accept']) {
         res.statusCode = 400;
         res.statusMessage = 'Bad Request';
