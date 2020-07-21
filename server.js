@@ -204,7 +204,7 @@ function removeRequestFiles (outputFile, inputFile) {
     //           reject('Something went wrong, could not remove all files.');
     //       })
     //       .then(() => {
-    //           //lignator.remove('assets', false);
+    //           lignator.remove('assets', false);
     //
     //           resolve();
     //       });
@@ -270,7 +270,7 @@ function handleRequest(req, res) {
             .then(() => console.log('Ready to handle a new Request.'));
     }
 }
-let server = https.createServer(handleRequest);
+let server = http.createServer(handleRequest);
 
 let p = process.env.PORT || port;
 server.listen(p, () => console.log('Server listening on port ' + p));
