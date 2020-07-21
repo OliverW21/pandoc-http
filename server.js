@@ -270,7 +270,7 @@ function handleRequest(req, res) {
             .then(() => console.log('Ready to handle a new Request.'));
     }
 }
-let server = http.createServer(handleRequest);
+let server = https.createServer(handleRequest);
 
 let p = process.env.PORT || port;
 server.listen(p, () => console.log('Server listening on port ' + p));
