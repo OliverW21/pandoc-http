@@ -1,6 +1,6 @@
 const http = require('http');
 const https = require('https');
-const fs = require('fs');
+const fs = require('fs-promise');
 const mediaTypeConverter = require('./mediatype-converter');
 const rawBody = require('raw-body');
 const lignator = require('lignator');
