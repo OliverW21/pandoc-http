@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import sys
-import json
 from pandocfilters import toJSONFilter, RawBlock, RawInline, Para, Table, Plain
 
 def latex(s):
@@ -14,7 +13,7 @@ def tbl_caption(s):
 
 def tbl_alignment(s):
     aligns = {
-        "AlignDefault": 'X',
+        "AlignDefault": 'L',
         "AlignLeft": 'L',
         "AlignCenter": 'C',
         "AlignRight": 'R',
@@ -57,10 +56,10 @@ def do_filter(key, value, f, m):
         # between them, plus pipes at start and end.
         # This results in a boxed table.
         new_alignment = "|" + "|".join(split_alignment) + "|"
-        return [latex(r'\begin{tabularx}{16cm}{%s} \hline' % new_alignment),
+        return [latex(r'\begin{ltabulary}{@{\extracolsep{\fill}}%s} \hline' % new_alignment),
                 tbl_headers(value[3]),
                 tbl_contents(value[4]),
-                latex(r'\end{tabularx}'),
+                latex(r'\end{ltabulary}'),
                 ]
 
 if __name__ == "__main__":
