@@ -56,10 +56,10 @@ def do_filter(key, value, f, m):
         # between them, plus pipes at start and end.
         # This results in a boxed table.
         new_alignment = "|" + "|".join(split_alignment) + "|"
-        return [latex(r'\tymin=50pt\tymax=400pt\begin{tabulary}{16cm}{%s} \hline' % new_alignment),
+        return [latex(r'\tymin=50pt\tymax=400pt\begin{ltabulary}{16cm}{%s} \hline' % new_alignment),
                 tbl_headers(value[3]),
                 tbl_contents(value[4]),
-                latex(r'\end{tabulary}'),
+                latex(r'\end{ltabulary}'),
                 ]
 
 if __name__ == "__main__":
