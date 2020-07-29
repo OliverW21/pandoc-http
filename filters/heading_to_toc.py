@@ -10,7 +10,7 @@ def do_filter(key, value, f, m):
         heading_no = value[0]
         if heading_no == 6:
             begin_heading = '\\textbf{\large \section*{'
-            begin_toc = '\\addcontentsline{toc}{section}{'
+            begin_toc = '\\addcontentsline{toc}{section}{\\normalfont'
         elif heading_no == 4:
             begin_heading = '\\textbf{\Large \part*{'
             begin_toc = '\\addcontentsline{toc}{part}{'
