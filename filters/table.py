@@ -59,7 +59,7 @@ def do_filter(key, value, f, m):
         return [latex(r'\tymin=50pt\tymax=400pt\begin{tabulary}{16cm}{%s} \hline' % new_alignment),
                 tbl_headers(value[3]),
                 tbl_contents(value[4]),
-                latex(r'\end{ltabulary}'),
+                latex(r'\end{tabulary}'),
                 ]
 
 if __name__ == "__main__":
