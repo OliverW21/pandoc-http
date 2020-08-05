@@ -26,12 +26,12 @@ def tbl_headers(s):
     # We are still missing "\textbf{" for the first column
     # and a "}" for the last column.
     for i in range(1, len(s)):
-        result.append(inlatex(r'} & \textbf{'))
+        result.append(inlatex(r'} & \textbf{\hspace*{0pt}'))
         result.extend(s[i][0]['c'])
     # Don't forget to close the last column's "\textbf{" before newline
     result.append(inlatex(r'} \\ \hline'))
     # Put the missing "\textbf{" in front of the list
-    result.insert(0, inlatex(r'\textbf{'))
+    result.insert(0, inlatex(r'\textbf{\hspace*{0pt}'))
     return Para(result)
 
 def tbl_contents(s):
