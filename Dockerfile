@@ -45,4 +45,4 @@ RUN npm install
 
 EXPOSE 80
 
-CMD ["node", "--max-http-header-size 524288000 server.js"]
+CMD node --max-http-header-size 524288000 server.js
