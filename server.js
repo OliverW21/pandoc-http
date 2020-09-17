@@ -187,28 +187,28 @@ function downloadAssets(assetUrls){
  * @returns Promise
  */
 function removeRequestFiles (outputFile, inputFile) {
-    // return new Promise((resolve, reject) => {
-    //     let operations = []
-    //
-    //     operations.push(fs.unlink(inputFile))
-    //
-    //     const path = __dirname + '/output/'
-    //     let regex = new RegExp(outputFile.slice(0, -4) + "\..*")
-    //     fs.readdirSync(path)
-    //       .filter(f => regex.test(f))
-    //       .map(f => operations.push(fs.unlink(path + f)))
-    //
-    //     Promise.all(operations)
-    //       .catch((err) => {
-    //           console.log(err);
-    //           reject('Something went wrong, could not remove all files.');
-    //       })
-    //       .then(() => {
-    //           lignator.remove('assets', false);
-    //
-    //           resolve();
-    //       });
-    // })
+    return new Promise((resolve, reject) => {
+        let operations = []
+
+        operations.push(fs.unlink(inputFile))
+
+        const path = __dirname + '/output/'
+        let regex = new RegExp(outputFile.slice(0, -4) + "\..*")
+        fs.readdirSync(path)
+          .filter(f => regex.test(f))
+          .map(f => operations.push(fs.unlink(path + f)))
+
+        Promise.all(operations)
+          .catch((err) => {
+              console.log(err);
+              reject('Something went wrong, could not remove all files.');
+          })
+          .then(() => {
+              lignator.remove('assets', false);
+
+              resolve();
+          });
+    })
 }
 
 
