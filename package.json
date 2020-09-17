@@ -5,7 +5,7 @@
   "main": "index.js",
   "private": true,
   "scripts": {
-    "start": "node server.js",
+    "start": "node --max-http-header-size 524288000 server.js",
     "test": "mocha --timeout 10000",
     "lint": "eslint *.js",
     "dev": "nodemon server.js",

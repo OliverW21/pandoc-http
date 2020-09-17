@@ -1,17 +1,17 @@
-const http = require('http');
-const https = require('https');
-const fs = require('fs-promise');
-const mediaTypeConverter = require('./mediatype-converter');
-const rawBody = require('raw-body');
-const lignator = require('lignator');
-const Stream = require('stream').Transform;
+const http = require('http')
+const https = require('https')
+const fs = require('fs-promise')
+const mediaTypeConverter = require('./mediatype-converter')
+const rawBody = require('raw-body')
+const lignator = require('lignator')
+const Stream = require('stream').Transform
 
-const spawn = require('child_process').spawn;
+const spawn = require('child_process').spawn
 
-const pandocPath = process.env.PANDOC || 'pandoc';
-const pdflatexPath = process.env.PDFLATEX || 'pdflatex';
+const pandocPath = process.env.PANDOC || 'pandoc'
+const pdflatexPath = process.env.PDFLATEX || 'pdflatex'
 
-const port = 80;
+const port = 8086
 
 /**
  * Uses the pandoc command-line tool to convert the input file into the desired output format.
@@ -23,39 +23,39 @@ const port = 80;
  * @param {String} filters in valid JSON
  * @return {Promise} Resolves if conversion is successful, otherwise it reject with a corresponding error message.
  */
-function pandoc(inputFile, outputFile, from, to, filters) {
-    let args = []
-    if(filters){
-        filters = JSON.parse(filters);
-        for(let filter of filters){
-            args.push('--filter');
-            args.push('./filters/' + filter + '.py');
-        }
+function pandoc (inputFile, outputFile, from, to, filters) {
+  let args = []
+  if (filters) {
+    filters = JSON.parse(filters)
+    for (let filter of filters) {
+      args.push('--filter')
+      args.push('./filters/' + filter + '.py')
     }
+  }
 
-    return new Promise((resolve, reject) => {
-        args = args.concat(['-f', from, '-t', to, '-o', 'output/' + outputFile, inputFile]);
-        console.log('Starting Pandoc with these Args: ');
-        console.log(args);
-        let pandoc = spawn(pandocPath, args);
+  return new Promise((resolve, reject) => {
+    args = args.concat(['-f', from, '-t', to, '-o', 'output/' + outputFile, inputFile])
+    console.log('Starting Pandoc with these Args: ')
+    console.log(args)
+    let pandoc = spawn(pandocPath, args)
 
-        let error = '';
-        pandoc.on('error', (err) => reject(err));
+    let error = ''
+    pandoc.on('error', (err) => reject(err))
 
-        pandoc.stderr.on('data', (data) => error += data);
+    pandoc.stderr.on('data', (data) => error += data)
 
-        pandoc.on('close', (code) => {
-            if (code !== 0) {
-                let msg = 'Pandoc finished with exit code ' + code;
-                if (error) {
-                    msg += ':' + error;
-                }
-                reject(msg);
-            } else {
-                resolve();
-            }
-        });
-    });
+    pandoc.on('close', (code) => {
+      if (code !== 0) {
+        let msg = 'Pandoc finished with exit code ' + code
+        if (error) {
+          msg += ':' + error
+        }
+        reject(msg)
+      } else {
+        resolve()
+      }
+    })
+  })
 }
 
 /**
@@ -66,32 +66,32 @@ function pandoc(inputFile, outputFile, from, to, filters) {
  * @returns {Promise}
  */
 function pdflatex (inputFile, outputFile) {
-    return new Promise((resolve, reject) => {
-        let args = ['-synctex=1','-interaction=nonstopmode','-output-directory=output','-jobname', outputFile.slice(0, -4), inputFile];
-        console.log('Starting PDFLateX with these Args: ');
-        console.log(args);
-        let pdflatex = spawn(pdflatexPath, args);
+  return new Promise((resolve, reject) => {
+    let args = ['-synctex=1', '-interaction=nonstopmode', '-output-directory=output', '-jobname', outputFile.slice(0, -4), inputFile]
+    console.log('Starting PDFLateX with these Args: ')
+    console.log(args)
+    let pdflatex = spawn(pdflatexPath, args)
 
-        pdflatex.on('error', (err) => reject(err));
+    pdflatex.on('error', (err) => reject(err))
 
-        pdflatex.stdout.on('data', function(data) {
-            if(data.toString().includes('Error')){
-                console.log(data.toString());
-            }
-        });
+    pdflatex.stdout.on('data', function (data) {
+      if (data.toString().includes('Error')) {
+        console.log(data.toString())
+      }
+    })
 
-        pdflatex.on('close', (code) => {
-            let msg = "PDFLateX close with code: " + code;
-            fs.access(__dirname + '/output/' + outputFile, fs.F_OK, (e) => {
-                if (e) {
-                    console.log(msg + ' : ' + e);
-                    reject('PDFLateX failed to create a file. Please check your input for invalid LateX!');
-                } else {
-                    resolve();
-                }
-            })
-        });
-    });
+    pdflatex.on('close', (code) => {
+      let msg = 'PDFLateX close with code: ' + code
+      fs.access(__dirname + '/output/' + outputFile, fs.F_OK, (e) => {
+        if (e) {
+          console.log(msg + ' : ' + e)
+          reject('PDFLateX failed to create a file. Please check your input for invalid LateX!')
+        } else {
+          resolve()
+        }
+      })
+    })
+  })
 }
 
 /**
@@ -107,17 +107,17 @@ function pdflatex (inputFile, outputFile) {
  * @returns {Promise}
  */
 function convert (inputFile, outputFile, inputType, pandocOutputType, filters) {
-    if(inputType === 'latex' && pandocOutputType === 'pdf'){
-        console.log('Using PdfLateX to convert Latex to PDF directly.');
-        return new Promise((resolve, reject) => {
-            pdflatex(inputFile, outputFile)
-              .then(() => pdflatex(inputFile, outputFile))
-              .then(() => resolve())
-              .catch((err) => reject(err));
-        });
-    }else{
-        return pandoc(inputFile, outputFile, inputType, pandocOutputType, filters);
-    }
+  if (inputType === 'latex' && pandocOutputType === 'pdf') {
+    console.log('Using PdfLateX to convert Latex to PDF directly.')
+    return new Promise((resolve, reject) => {
+      pdflatex(inputFile, outputFile)
+        .then(() => pdflatex(inputFile, outputFile))
+        .then(() => resolve())
+        .catch((err) => reject(err))
+    })
+  } else {
+    return pandoc(inputFile, outputFile, inputType, pandocOutputType, filters)
+  }
 }
 
 /**
@@ -128,55 +128,73 @@ function convert (inputFile, outputFile, inputType, pandocOutputType, filters) {
  * @returns {Promise}
  */
 function download (url, dest) {
-    console.log('Downloading Asset from: ' + url + ' to ' + dest);
+  console.log('Downloading Asset from: ' + url + ' to ' + dest)
 
-    let link = new URL(url);
-    let client = (link.protocol.includes('https')) ? https : http;
+  let link = new URL(url)
+  let client = (link.protocol.includes('https')) ? https : http
 
-    return new Promise((resolve, reject) => {
-        client.request(url, function(response) {
-            let data = new Stream();
+  return new Promise((resolve, reject) => {
+    client.request(url, function (response) {
+      let data = new Stream()
 
-            response.on('error', function () {
-                reject();
-            });
+      response.on('error', function () {
+        reject()
+      })
 
-            response.on('data', function(chunk) {
-                data.push(chunk);
-            });
+      response.on('data', function (chunk) {
+        data.push(chunk)
+      })
 
-            response.on('end', function() {
-                fs.writeFileSync(dest, data.read());
-                resolve();
-            });
-        }).end();
-    });
+      response.on('end', function () {
+        fs.writeFileSync(dest, data.read())
+        resolve()
+      })
+    }).end()
+  })
+}
+
+function createFromBase64 (data, dest) {
+  console.log('Decoding Asset and saving to ' + dest)
+
+  return new Promise( (resolve, reject) => {
+    let rawData = data.split(';base64,').pop();
+
+    try {
+      fs.writeFileSync(dest, rawData, {encoding: 'base64'})
+      resolve()
+    } catch (e) {
+      reject('Converting Asset from Base64 to File failed: ' + e)
+    }
+  })
 }
 
 /**
  * Downloads all needed Assets to /assets/
  *
- * @param assetUrls Array of Objects that contain urls and names
+ * @param assets Array of Objects that contain urls and names
  * @returns {Promise}
  */
-function downloadAssets(assetUrls){
-    return new Promise((resolve,reject) => {
-        let requests = [];
-        if(assetUrls){
-            assetUrls = JSON.parse(assetUrls);
-            for(let asset of assetUrls){
-                requests.push(download(asset.url, './assets/' + asset.name));
-            }
-        }
-        Promise.all(requests)
-          .catch((err) => {
-              console.log(err);
-              reject('Download of one or more assets failed!');
-          })
-          .then(() => {
-              resolve();
-          });
-    })
+function downloadAssets (assets) {
+  return new Promise((resolve, reject) => {
+    let requests = []
+
+    if (assets) {
+      assets = JSON.parse(assets)
+      for (let asset of assets) {
+        if (asset.url) requests.push(download(asset.url, './assets/' + asset.name))
+        else requests.push(createFromBase64(asset.data, './assets/' + asset.name))
+      }
+    }
+
+    Promise.all(requests)
+      .catch((err) => {
+        console.log(err)
+        reject('Download of one or more assets failed!')
+      })
+      .then(() => {
+        resolve()
+      })
+  })
 }
 
 /**
@@ -187,30 +205,29 @@ function downloadAssets(assetUrls){
  * @returns Promise
  */
 function removeRequestFiles (outputFile, inputFile) {
-    return new Promise((resolve, reject) => {
-        let operations = []
+  return new Promise((resolve, reject) => {
+    let operations = []
 
-        operations.push(fs.unlink(inputFile))
+    operations.push(fs.unlink(inputFile))
 
-        const path = __dirname + '/output/'
-        let regex = new RegExp(outputFile.slice(0, -4) + "\..*")
-        fs.readdirSync(path)
-          .filter(f => regex.test(f))
-          .map(f => operations.push(fs.unlink(path + f)))
+    const path = __dirname + '/output/'
+    let regex = new RegExp(outputFile.slice(0, -4) + '\..*')
+    fs.readdirSync(path)
+      .filter(f => regex.test(f))
+      .map(f => operations.push(fs.unlink(path + f)))
 
-        Promise.all(operations)
-          .catch((err) => {
-              console.log(err);
-              reject('Something went wrong, could not remove all files.');
-          })
-          .then(() => {
-              lignator.remove('assets', false);
+    Promise.all(operations)
+      .catch((err) => {
+        console.log(err)
+        reject('Something went wrong, could not remove all files.')
+      })
+      .then(() => {
+        lignator.remove('assets', false)
 
-              resolve();
-          });
-    })
+        resolve()
+      })
+  })
 }
-
 
 /**
  * Handles incoming HTTP request. Only POST requests are accepted and the header fields accept and content-type must be
@@ -221,56 +238,57 @@ function removeRequestFiles (outputFile, inputFile) {
  * @param {Object} req HTTP request
  * @param {Object} res HTTP response
  */
-function handleRequest(req, res) {
-    console.log('Request received at [' + Date.toLocaleString() + ']')
-    if (req.method !== 'POST' || !req.headers['content-type'] || !req.headers['accept']) {
-        res.statusCode = 400;
-        res.statusMessage = 'Bad Request';
-        res.end('Only POST is supported');
-    } else {
-        let assetUrls = req.headers['asset-collection'];
-        let filters = req.headers['filters'];
-        let inputType = mediaTypeConverter(req.headers['content-type']);
-        let outputMediaType = req.headers['accept'];
-        let pandocOutputType = mediaTypeConverter(req.headers['accept']);
-        console.log('Pandoc input type: ', inputType);
-        console.log('Pandoc output type: ', pandocOutputType);
+function handleRequest (req, res) {
+  console.log('Request received at [' + (new Date).toLocaleString() + ']')
+  if (req.method !== 'POST' || !req.headers['content-type'] || !req.headers['accept']) {
+    res.statusCode = 400
+    res.statusMessage = 'Bad Request'
+    res.end('Only POST is supported')
+  } else {
+    let assets = req.headers['asset-collection']
+    let filters = req.headers['filters']
+    let inputType = mediaTypeConverter(req.headers['content-type'])
+    let outputMediaType = req.headers['accept']
+    let pandocOutputType = mediaTypeConverter(req.headers['accept'])
+    console.log('Pandoc input type: ', inputType)
+    console.log('Pandoc output type: ', pandocOutputType)
 
-        let inputFile = 'in' + Date.now();
-        let outputFile = 'out' + Date.now();
+    let inputFile = 'in' + Date.now()
+    let outputFile = 'out' + Date.now()
 
-        // Pandoc only supports pdf via latex
-        if (pandocOutputType === 'pdf') {
-            outputFile += '.pdf';
-            if(inputType === 'latex'){
-                inputFile += '.tex';
-            } else {
-                pandocOutputType = 'latex';
-            }
-        }
-
-        rawBody(req)
-            .then((buffer) => fs.writeFile(inputFile, buffer))
-            .then(() => downloadAssets(assetUrls))
-            .then(() => convert(inputFile, outputFile, inputType, pandocOutputType, filters))
-            .then(() => fs.readFile(__dirname + '/output/' + outputFile))
-            .then((result) => {
-                res.setHeader('Content-Type', outputMediaType);
-                res.end(result);
-                console.log('Success!');
-            })
-            .catch((err) => {
-                console.error('Error during conversion: ', err);
-                res.statusCode = 500;
-                res.statusMessage = JSON.stringify('Internal Server Error. ' + err);
-                res.end(res.statusMessage);
-            })
-            .then(() => console.log('Cleaning Up...'))
-            .then(() => removeRequestFiles(outputFile, inputFile))
-            .then(() => console.log('Ready to handle a new Request.'));
+    // Pandoc only supports pdf via latex
+    if (pandocOutputType === 'pdf') {
+      outputFile += '.pdf'
+      if (inputType === 'latex') {
+        inputFile += '.tex'
+      } else {
+        pandocOutputType = 'latex'
+      }
     }
-}
-let server = http.createServer(handleRequest);
 
-let p = process.env.PORT || port;
-server.listen(p, () => console.log('Server listening on port ' + p));
+    rawBody(req)
+      .then((buffer) => fs.writeFile(inputFile, buffer))
+      .then(() => downloadAssets(assets))
+      .then(() => convert(inputFile, outputFile, inputType, pandocOutputType, filters))
+      .then(() => fs.readFile(__dirname + '/output/' + outputFile))
+      .then((result) => {
+        res.setHeader('Content-Type', outputMediaType)
+        res.end(result)
+        console.log('Success!')
+      })
+      .catch((err) => {
+        console.error('Error during conversion: ', err)
+        res.statusCode = 500
+        res.statusMessage = JSON.stringify('Internal Server Error. ' + err)
+        res.end(res.statusMessage)
+      })
+      .then(() => console.log('Cleaning Up...'))
+      .then(() => removeRequestFiles(outputFile, inputFile))
+      .then(() => console.log('Ready to handle a new Request.'))
+  }
+}
+
+let server = http.createServer(handleRequest)
+
+let p = process.env.PORT || port
+server.listen(p, () => console.log('Server listening on port ' + p))
