@@ -11,7 +11,7 @@ const spawn = require('child_process').spawn
 const pandocPath = process.env.PANDOC || 'pandoc'
 const pdflatexPath = process.env.PDFLATEX || 'pdflatex'
 
-const port = 8086
+const port = 80
 
 /**
  * Uses the pandoc command-line tool to convert the input file into the desired output format.
