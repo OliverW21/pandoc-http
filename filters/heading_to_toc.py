@@ -9,10 +9,10 @@ def do_filter(key, value, f, m):
     if key == "Header":
         heading_no = value[0]
         if heading_no == 6:
-            begin_heading = '\\textbf{\large \section*{'
+            begin_heading = '\\textbf{\\normalsize \section*{'
             begin_toc = '\\addcontentsline{toc}{section}{\\normalfont '
         elif heading_no == 4:
-            begin_heading = '\\textbf{\Large \part*{'
+            begin_heading = '\\textbf{\large \part*{'
             begin_toc = '\\addcontentsline{toc}{part}{'
         else:
             return
