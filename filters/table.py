@@ -2,14 +2,18 @@
 import sys
 from pandocfilters import toJSONFilter, RawBlock, RawInline, Para, Table, Plain
 
+
 def latex(s):
     return RawBlock('latex', s)
+
 
 def inlatex(s):
     return RawInline('latex', s)
 
+
 def tbl_caption(s):
     return Para([inlatex(r'\caption{')] + s + [inlatex('}')])
+
 
 def tbl_alignment(s):
     aligns = {
@@ -20,8 +24,9 @@ def tbl_alignment(s):
     }
     return ''.join([aligns[e['t']] for e in s])
 
+
 def tbl_headers(s):
-    try:
+    if s[0] and s[0][0]:
         result = s[0][0]['c'][:]
         # Build the columns. Note how the every column value is bold.
         # We are still missing "\textbf{" for the first column
@@ -34,8 +39,8 @@ def tbl_headers(s):
         # Put the missing "\textbf{" in front of the list
         result.insert(0, inlatex(r'\textbf{\hspace*{0pt}'))
         return Para(result)
-    except IndexError:
-        return
+    else:
+        return Para()
 
 
 def tbl_contents(s):
@@ -49,6 +54,7 @@ def tbl_contents(s):
         result.extend(para)
         result[-1] = inlatex(r' \\ \hline' '\n')
     return Para(result)
+
 
 def do_filter(key, value, f, m):
     if key == "Table":
@@ -65,6 +71,7 @@ def do_filter(key, value, f, m):
                 tbl_contents(value[4]),
                 latex(r'\end{ltabulary}'),
                 ]
+
 
 if __name__ == "__main__":
     if sys.version_info[0] < 3:
