@@ -26,21 +26,18 @@ def tbl_alignment(s):
 
 
 def tbl_headers(s):
-    if s[0] and s[0][0] and s[0][0]['c']:
-        result = s[0][0]['c'][:]
-        # Build the columns. Note how the every column value is bold.
-        # We are still missing "\textbf{" for the first column
-        # and a "}" for the last column.
-        for i in range(1, len(s)):
-            result.append(inlatex(r'} & \textbf{\hspace*{0pt}'))
-            result.extend(s[i][0]['c'])
-        # Don't forget to close the last column's "\textbf{" before newline
-        result.append(inlatex(r'} \\ \hline'))
-        # Put the missing "\textbf{" in front of the list
-        result.insert(0, inlatex(r'\textbf{\hspace*{0pt}'))
-        return Para(result)
-    else:
-        return Para()
+    result = s[0][0]['c'][:]
+    # Build the columns. Note how the every column value is bold.
+    # We are still missing "\textbf{" for the first column
+    # and a "}" for the last column.
+    for i in range(1, len(s)):
+        result.append(inlatex(r'} & \textbf{\hspace*{0pt}'))
+        result.extend(s[i][0]['c'])
+    # Don't forget to close the last column's "\textbf{" before newline
+    result.append(inlatex(r'} \\ \hline'))
+    # Put the missing "\textbf{" in front of the list
+    result.insert(0, inlatex(r'\textbf{\hspace*{0pt}'))
+    return Para(result)
 
 
 def tbl_contents(s):
