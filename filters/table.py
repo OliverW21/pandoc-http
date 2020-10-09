@@ -2,18 +2,14 @@
 import sys
 from pandocfilters import toJSONFilter, RawBlock, RawInline, Para, Table, Plain
 
-
 def latex(s):
     return RawBlock('latex', s)
-
 
 def inlatex(s):
     return RawInline('latex', s)
 
-
 def tbl_caption(s):
     return Para([inlatex(r'\caption{')] + s + [inlatex('}')])
-
 
 def tbl_alignment(s):
     aligns = {
@@ -23,7 +19,6 @@ def tbl_alignment(s):
         "AlignRight": 'R',
     }
     return ''.join([aligns[e['t']] for e in s])
-
 
 def tbl_headers(s):
     result = s[0][0]['c'][:]
@@ -39,7 +34,6 @@ def tbl_headers(s):
     result.insert(0, inlatex(r'\textbf{\hspace*{0pt}'))
     return Para(result)
 
-
 def tbl_contents(s):
     result = []
     for row in s:
@@ -51,7 +45,6 @@ def tbl_contents(s):
         result.extend(para)
         result[-1] = inlatex(r' \\ \hline' '\n')
     return Para(result)
-
 
 def do_filter(key, value, f, m):
     if key == "Table":
@@ -68,7 +61,6 @@ def do_filter(key, value, f, m):
                 tbl_contents(value[4]),
                 latex(r'\end{ltabulary}'),
                 ]
-
 
 if __name__ == "__main__":
     if sys.version_info[0] < 3:
