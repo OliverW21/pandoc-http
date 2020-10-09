@@ -57,7 +57,6 @@ def do_filter(key, value, f, m):
         # This results in a boxed table.
         new_alignment = "|" + "|".join(split_alignment) + "|"
         return [latex(r'\hspace*{0pt}\tymin=50pt\tymax=400pt\begin{ltabulary}{16cm}{%s} \hline' % new_alignment),
-                tbl_headers(value[3]),
                 tbl_contents(value[4]),
                 latex(r'\end{ltabulary}'),
                 ]
